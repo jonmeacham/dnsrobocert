@@ -47,6 +47,7 @@ RUN PIP_EXTRA_INDEX_URL=https://www.piwheels.org/simple PIP_CONSTRAINT=/tmp/dnsr
     acme==5.0.0 certbot==5.0.0 cffi==2.0.0 colorama==0.4.6 coloredlogs==15.0.1 \
     cryptography==46.0.1 dnspython==2.8.0 jsonschema==4.25.1 lxml==6.0.2 \
     pem==23.1.0 pyopenssl==25.3.0 pyyaml==6.0.2 schedule==1.2.2 tldextract==5.3.0 \
+    watchdog==4.0.2 \
     oci==2.9.0 \
     "dns-lexicon[full] @ git+https://github.com/jonmeacham/dns-lexicon.git@main" \
  # Create necessary directories

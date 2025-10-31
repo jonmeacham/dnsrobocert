@@ -37,18 +37,20 @@ def worker(
         stop_thread=stop_thread,
     )
 
-    _launch_background_jobs(stop_thread)
+    background_thread = _launch_background_jobs(stop_thread)
 
     try:
         yield
     finally:
         stop_thread.set()
+        # Join the thread for deterministic cleanup
+        if background_thread and background_thread.is_alive():
+            background_thread.join(timeout=5.0)  # 5 second timeout for graceful shutdown
 
 
-def _launch_background_jobs(stop_thread: threading.Event, interval: int = 1) -> None:
+def _launch_background_jobs(stop_thread: threading.Event, interval: int = 1) -> threading.Thread:
     class ScheduleThread(threading.Thread):
-        @classmethod
-        def run(cls) -> None:
+        def run(self) -> None:
             while not stop_thread.is_set():
                 # Use wait() with timeout instead of sleep for faster shutdown
                 if stop_thread.wait(timeout=interval):
@@ -57,6 +59,7 @@ def _launch_background_jobs(stop_thread: threading.Event, interval: int = 1) -> 
 
     continuous_thread = ScheduleThread()
     continuous_thread.start()
+    return continuous_thread
 
 
 def _renew_job(

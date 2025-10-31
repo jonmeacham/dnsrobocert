@@ -4,7 +4,7 @@ This document outlines prioritized, actionable improvements across performance, 
 
 ### Top Priorities (High impact, Low/Medium effort)
 - Fix background scheduler thread implementation and avoid busy waits
-- Replace 1s polling loop for config changes with event-driven file watching (fallback to mtime)
+- ~~Replace 1s polling loop for config changes with event-driven file watching (fallback to mtime)~~
 - Eliminate shell=True in deploy hook; accept list-form commands to avoid injection
 - Align and pin dependency sources (git refs, constraints) consistently across pyproject, uv.lock, and Dockerfile
 - Harden container: non-root user, minimal runtime deps, read-only filesystem, no git in final image
@@ -14,12 +14,12 @@ This document outlines prioritized, actionable improvements across performance, 
 
 ## Performance
 
-1) Replace tight polling with event-driven reloads (High impact, Low effort)
+1) ~~Replace tight polling with event-driven reloads~~ (High impact, Low effort)
 - Current: `main._watch_config` recomputes SHA-256 every second to detect changes, and `background` thread wakes every second to run `schedule.run_pending()`.
 - Actions:
-  - Use `watchdog`/inotify to watch the config file and trigger `_process_config` immediately on change; fallback to mtime/size check if watchdog unavailable.
-  - Increase sleep to e.g. 5–10s when falling back to polling.
-  - Compute digest only when mtime/size changed to avoid reading file on every loop.
+  - ~~Use `watchdog`/inotify to watch the config file and trigger `_process_config` immediately on change; fallback to mtime/size check if watchdog unavailable.~~
+  - ~~Increase sleep to e.g. 5–10s when falling back to polling.~~
+  - ~~Compute digest only when mtime/size changed to avoid reading file on every loop.~~
 
 2) Correct scheduler thread implementation and graceful shutdown (High impact, Low effort)
 - Ensure the background thread uses an instance method `run(self, ...)` and joins on shutdown for deterministic cleanup.
