@@ -167,7 +167,9 @@ def _start_pebble(tmp_path: Path) -> Iterator[None]:
     platform.system() == "Darwin",
     reason="Integration tests are not supported on Mac OS X.",
 )
-def test_it(tmp_path: Path) -> None:
+def test_it(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SNAP", raising=False)
+
     with _start_pebble(tmp_path):
         directory_path = tmp_path / "letsencrypt"
         os.mkdir(directory_path)
