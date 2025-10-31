@@ -241,7 +241,7 @@ def _autocmd(certificate: dict[str, Any]) -> None:
                 if isinstance(command, list):
                     utils.execute(["docker", "exec", container, *command])
                 else:
-                    utils.execute(["docker", "exec", container] + shlex.split(command))
+                    utils.execute(f"docker exec {container} {command}", shell=True)
 
 
 def _deploy_hook(certificate: dict[str, Any]) -> None:

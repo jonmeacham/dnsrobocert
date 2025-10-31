@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import threading
-import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from random import random
@@ -16,20 +15,27 @@ LOGGER = logging.getLogger(__name__)
 coloredlogs.install(logger=LOGGER)
 
 
+_RENEW_JOB_TAG = "dnsrobocert-renew"
+_DEFAULT_SCHEDULER_INTERVAL_SECONDS = 1.0
+
+
 @contextmanager
 def worker(
     config_path: str, directory_path: str, lock: threading.Lock
 ) -> Iterator[None]:
     stop_thread = threading.Event()
 
-    schedule.every().day.at("12:00").do(
+    # Prevent duplicated jobs when worker is recreated
+    schedule.clear(_RENEW_JOB_TAG)
+
+    schedule.every().day.at("12:00").tag(_RENEW_JOB_TAG).do(
         _renew_job,
         config_path=config_path,
         directory_path=directory_path,
         lock=lock,
         stop_thread=stop_thread,
     )
-    schedule.every().day.at("00:00").do(
+    schedule.every().day.at("00:00").tag(_RENEW_JOB_TAG).do(
         _renew_job,
         config_path=config_path,
         directory_path=directory_path,
@@ -37,7 +43,9 @@ def worker(
         stop_thread=stop_thread,
     )
 
-    background_thread = _launch_background_jobs(stop_thread)
+    background_thread = _launch_background_jobs(
+        stop_thread, interval=_DEFAULT_SCHEDULER_INTERVAL_SECONDS
+    )
 
     try:
         yield
@@ -46,15 +54,27 @@ def worker(
         # Join the thread for deterministic cleanup
         if background_thread and background_thread.is_alive():
             background_thread.join(timeout=5.0)  # 5 second timeout for graceful shutdown
+        schedule.clear(_RENEW_JOB_TAG)
 
 
-def _launch_background_jobs(stop_thread: threading.Event, interval: int = 1) -> threading.Thread:
+def _launch_background_jobs(
+    stop_thread: threading.Event, interval: float = _DEFAULT_SCHEDULER_INTERVAL_SECONDS
+) -> threading.Thread:
     class ScheduleThread(threading.Thread):
+        def __init__(self) -> None:
+            super().__init__(name="dnsrobocert-scheduler", daemon=True)
+
         def run(self) -> None:
             while not stop_thread.is_set():
-                # Use wait() with timeout instead of sleep for faster shutdown
-                if stop_thread.wait(timeout=interval):
+                idle_seconds = schedule.idle_seconds()
+                if idle_seconds is None or idle_seconds < 0:
+                    timeout = interval
+                else:
+                    timeout = min(interval, idle_seconds)
+
+                if stop_thread.wait(timeout=timeout):
                     break
+
                 schedule.run_pending()
 
     continuous_thread = ScheduleThread()

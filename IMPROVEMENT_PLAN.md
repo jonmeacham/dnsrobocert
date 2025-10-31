@@ -3,7 +3,7 @@
 This document outlines prioritized, actionable improvements across performance, security, and testing for this repository. Priorities are ranked by expected impact and relative implementation effort.
 
 ### Top Priorities (High impact, Low/Medium effort)
-- Fix background scheduler thread implementation and avoid busy waits
+- ~~Fix background scheduler thread implementation and avoid busy waits~~
 - ~~Replace 1s polling loop for config changes with event-driven file watching (fallback to mtime)~~
 - Eliminate shell=True in deploy hook; accept list-form commands to avoid injection
 - Align and pin dependency sources (git refs, constraints) consistently across pyproject, uv.lock, and Dockerfile
@@ -21,9 +21,9 @@ This document outlines prioritized, actionable improvements across performance, 
   - ~~Increase sleep to e.g. 5–10s when falling back to polling.~~
   - ~~Compute digest only when mtime/size changed to avoid reading file on every loop.~~
 
-2) Correct scheduler thread implementation and graceful shutdown (High impact, Low effort)
-- Ensure the background thread uses an instance method `run(self, ...)` and joins on shutdown for deterministic cleanup.
-- Replace `time.sleep()` with `Event.wait(timeout)` everywhere to enable fast termination (already partially used).
+2) ~~Correct scheduler thread implementation and graceful shutdown~~ (High impact, Low effort)
+- ~~Ensure the background thread uses an instance method `run(self, ...)` and joins on shutdown for deterministic cleanup.~~
+- ~~Replace `time.sleep()` with `Event.wait(timeout)` everywhere to enable fast termination (already partially used).~~
 
 3) Parallelize TXT propagation checks (Medium impact, Medium effort)
 - In `hooks.auth`, checking multiple `_acme-challenge` records is sequential with fixed sleeps.
